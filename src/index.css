@@ -1,3 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-nyro-blue: #2E3A87;
+  --color-aureon-green: #00FFC2;
+  --color-jam-red: #F54E4E;
+  --color-cosmic-bg: #030712;
+  --color-portal-border: #1f2937;
+
+  --animate-aurora: aurora 60s linear infinite;
+}
+
+@keyframes aurora {
+  from {
+    background-position: 50% 50%, 50% 50%;
+  }
+  to {
+    background-position: 350% 50%, 350% 50%;
+  }
+}
