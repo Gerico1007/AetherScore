@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
 
-    // Use index.local.html for both dev and build
-    const htmlPath = './index.local.html';
+    // Use index.html for both dev and build (local version)
+    const htmlPath = './index.html';
 
     return {
       build: {
