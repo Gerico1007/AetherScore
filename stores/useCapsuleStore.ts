@@ -48,6 +48,7 @@ interface CapsuleState {
   updatePartContent: (capsuleId: string, fileName: string, content: string) => void;
   addPart: (capsuleId: string, fileName: string) => void;
   deleteCapsule: (id: string) => void;
+  duplicateCapsule: (id: string) => Capsule | null;
 }
 
 export const useCapsuleStore = create<CapsuleState>()(
@@ -102,6 +103,24 @@ export const useCapsuleStore = create<CapsuleState>()(
         set((state) => ({
           capsules: state.capsules.filter(c => c.id !== id)
         }));
+      },
+      // 🎸 JamAI: Duplicate capsule - create variations on a theme!
+      duplicateCapsule: (id) => {
+        const original = get().getCapsule(id);
+        if (!original) return null;
+
+        const duplicate: Capsule = {
+          ...original,
+          id: `${original.meta.titre.toLowerCase().replace(/\s+/g, '-')}-copy-${Date.now()}`,
+          meta: {
+            ...original.meta,
+            titre: `${original.meta.titre} (Copy)`,
+          },
+          parts: original.parts.map(p => ({ ...p })), // Deep copy parts
+        };
+
+        set((state) => ({ capsules: [...state.capsules, duplicate] }));
+        return duplicate;
       },
     }),
     {
