@@ -4,15 +4,20 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+
+    // Use index.local.html for both dev and build
+    const htmlPath = './index.local.html';
+
     return {
       build: {
         rollupOptions: {
-          input: './index.local.html',
+          input: htmlPath,
         },
       },
       server: {
         port: 3000,
         host: '0.0.0.0',
+        open: htmlPath,
       },
       plugins: [react()],
       define: {

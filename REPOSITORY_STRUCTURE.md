@@ -39,6 +39,7 @@ graph TB
 
     subgraph "Utilities"
         R --> S[utils/capsuleManager.ts]
+        Q --> S1[utils/pdfExporter.ts]
         S --> T[types/index.ts]
     end
 
@@ -54,6 +55,8 @@ graph TB
         Z[Framer Motion 11.2.10]
         AA[Tailwind CSS 4.1.14]
         AB[Vite 7.1.9]
+        AC[jsPDF 3.0.3]
+        AD[svg2pdf.js 2.6.0]
     end
 
     style A fill:#e1f5ff
