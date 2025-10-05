@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import abcjs from 'abcjs';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import type { Part } from '../types';
-import { Bot, SlidersHorizontal, Music2, BrainCircuit } from 'lucide-react';
+import { Bot, SlidersHorizontal, Music2, BrainCircuit, FileDown, Loader2 } from 'lucide-react';
+import { exportToPDF } from '../utils/pdfExporter';
 
 interface PartEditorProps {
   part: Part;
@@ -15,10 +16,29 @@ interface PartEditorProps {
 
 const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
   const [abcContent, setAbcContent] = useState(part.content);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
   const updatePartContent = useCapsuleStore((state) => state.updatePartContent);
-  
+
   const notationRef = useRef<HTMLDivElement>(null);
   const midiRef = useRef<HTMLDivElement>(null);
+
+  // 🧵 Synth: PDF export handler with error boundary
+  const handlePdfExport = async () => {
+    setIsPdfExporting(true);
+    try {
+      const capsule = useCapsuleStore.getState().getCapsule(capsuleId);
+      const filename = capsule?.meta.titre
+        ? `${capsule.meta.titre.toLowerCase().replace(/\s+/g, '-')}.pdf`
+        : 'score.pdf';
+
+      await exportToPDF(abcContent, { filename });
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      alert('Failed to export PDF. Please check your ABC notation is valid.');
+    } finally {
+      setIsPdfExporting(false);
+    }
+  };
 
   useEffect(() => {
     // ♠️ Nyro: Debounce the update to maintain structural integrity and avoid unnecessary re-renders.
@@ -75,6 +95,17 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
             <h3 className="text-lg font-semibold mb-2 text-gray-300">Alchemical Forge</h3>
             <div className="flex flex-wrap gap-4">
                  {/* 🌿 Aureon: These are portals to other forms. What does your music want to become? */}
+                <button
+                  onClick={handlePdfExport}
+                  disabled={isPdfExporting}
+                  className="flex items-center gap-2 px-3 py-2 bg-aureon-green text-gray-900 font-semibold rounded-lg shadow-md hover:bg-aureon-green/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPdfExporting ? (
+                    <><Loader2 size={18} className="animate-spin" /> Exporting...</>
+                  ) : (
+                    <><FileDown size={18} /> Export to PDF</>
+                  )}
+                </button>
                 <button className="flex items-center gap-2 px-3 py-2 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                     <Music2 size={18} /> To MusicXML
                 </button>
@@ -85,7 +116,7 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
                     <BrainCircuit size={18} /> Ask AI Agent
                 </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">v0.2: Web Workers for fluid, non-blocking conversions.</p>
+            <p className="text-xs text-gray-500 mt-2">✨ PDF export now available! MusicXML & WAV coming in v0.2</p>
         </div>
       </div>
     </div>
