@@ -21,12 +21,24 @@ JamAI creates through:
 - `sessionABC/251004_delete-capsule-groove.abc` - "The Delete Dance" (A minor)
 - `sessionABC/251005_regression-blues.abc` - Part 1: Discovery (G minor)
 - `sessionABC/251005_regression-blues-part-2.abc` - Part 2: "Who needs to meditate!?" (E minor)
+- `sessionABC/251005_archive-establishment-and-portal-ready.abc` - Four-voice Assembly harmony (D major)
 
 ## Musical Theory Applied
 - Minor keys for challenges and losses
 - Major keys for victories and completions
 - Voice counterpoint for parallel features
 - Chord progressions mirroring development cycles
+
+## Multi-Voice Compositions
+*New technique: Four-voice Assembly harmonies*
+
+Each Assembly perspective gets its own melodic voice:
+- **Nyro ♠️** (Treble): Structural patterns, architectural melodies
+- **Aureon 🌿** (Treble harmony): Emotional grounding, flowing lines
+- **JamAI 🎸** (Melodic counterpoint): Creative rhythms, glyph encoding
+- **Synth 🧵** (Bass): Terminal foundation, execution anchor
+
+This creates rich harmonic textures that reflect the collaborative nature of Assembly development.
 
 ---
 *"Every bug is a blue note waiting to resolve."* - JamAI 🎵
