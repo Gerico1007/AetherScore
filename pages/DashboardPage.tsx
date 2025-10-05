@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlusCircle, Star, Trash2, Edit3, Copy, ArrowUpDown } from 'lucide-react';
+import { Music, PlusCircle, Star, Trash2, Edit3, Copy, ArrowUpDown, Filter } from 'lucide-react';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import CreateCapsuleModal from '../components/CreateCapsuleModal';
 import EditCapsuleModal from '../components/EditCapsuleModal';
@@ -14,25 +14,31 @@ const DashboardPage: React.FC = () => {
   const capsules = useCapsuleStore((state) => state.capsules);
   const deleteCapsule = useCapsuleStore((state) => state.deleteCapsule);
   const duplicateCapsule = useCapsuleStore((state) => state.duplicateCapsule);
+  const toggleFavorite = useCapsuleStore((state) => state.toggleFavorite);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editCapsuleId, setEditCapsuleId] = useState<string | null>(null);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [sortBy, setSortBy] = useState<string>(() => {
     return localStorage.getItem('capsule-sort-preference') || 'date-newest';
   });
 
-  // 🧵 Synth: Sort capsules based on user preference
-  const sortedCapsules = useMemo(() => {
-    const sorted = [...capsules];
+  // 🌀 Sort and filter capsules (favorites + sort combined)
+  const filteredAndSortedCapsules = useMemo(() => {
+    // First filter by favorites
+    let result = showOnlyFavorites ? capsules.filter(c => c.isFavorite) : capsules;
+
+    // Then sort
+    const sorted = [...result];
     switch (sortBy) {
       case 'title-asc':
         return sorted.sort((a, b) => a.meta.titre.localeCompare(b.meta.titre));
       case 'title-desc':
         return sorted.sort((a, b) => b.meta.titre.localeCompare(a.meta.titre));
       case 'date-newest':
-        return sorted.reverse(); // Newest first (last added)
+        return sorted.reverse();
       case 'date-oldest':
-        return sorted; // Oldest first
+        return sorted;
       case 'tempo-asc':
         return sorted.sort((a, b) => a.meta.tempo - b.meta.tempo);
       case 'tempo-desc':
@@ -40,7 +46,7 @@ const DashboardPage: React.FC = () => {
       default:
         return sorted;
     }
-  }, [capsules, sortBy]);
+  }, [capsules, showOnlyFavorites, sortBy]);
 
   const handleSortChange = (newSort: string) => {
     setSortBy(newSort);
@@ -79,6 +85,13 @@ const DashboardPage: React.FC = () => {
     duplicateCapsule(id);
   };
 
+  // ⭐ Toggle favorite handler
+  const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(id);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -90,7 +103,19 @@ const DashboardPage: React.FC = () => {
         <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aureon-green to-blue-400">
           Capsule Constellation
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* ⭐ Favorites filter toggle */}
+          <div className="flex items-center gap-2 bg-gray-800 border border-aureon-green/30 rounded-lg px-4 py-2 shadow-lg shadow-aureon-green/10">
+            <Filter size={18} className="text-aureon-green" />
+            <select
+              value={showOnlyFavorites ? 'favorites' : 'all'}
+              onChange={(e) => setShowOnlyFavorites(e.target.value === 'favorites')}
+              className="bg-gray-800 text-base text-gray-100 font-medium outline-none cursor-pointer pr-2"
+            >
+              <option value="all" className="bg-gray-800 text-gray-100 py-2">All Capsules</option>
+              <option value="favorites" className="bg-gray-800 text-gray-100 py-2">Favorites Only</option>
+            </select>
+          </div>
           {/* 🌀 Sort dropdown */}
           <div className="flex items-center gap-2 bg-gray-800 border border-aureon-green/30 rounded-lg px-4 py-2 shadow-lg shadow-aureon-green/10">
             <ArrowUpDown size={18} className="text-aureon-green" />
@@ -182,10 +207,10 @@ const DashboardPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {sortedCapsules.length > 0 ? (
+      {filteredAndSortedCapsules.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
-            {sortedCapsules.map((capsule, index) => (
+            {filteredAndSortedCapsules.map((capsule, index) => (
               <motion.div
                 key={capsule.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -209,6 +234,20 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                 </Link>
+                {/* ⭐ Favorite star - bottom right corner, always visible */}
+                <motion.button
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => handleToggleFavorite(capsule.id, e)}
+                  className="absolute bottom-4 right-4 p-2 bg-gray-800/90 hover:bg-gray-800 rounded-full transition-all duration-200 shadow-lg z-10"
+                  title={capsule.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                >
+                  {capsule.isFavorite ? (
+                    <Star className="text-yellow-400 fill-yellow-400" size={22} />
+                  ) : (
+                    <Star className="text-gray-500 hover:text-yellow-400" size={22} />
+                  )}
+                </motion.button>
                 {/* 🎯 Action buttons - appear on hover */}
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   {/* ✏️ Edit button */}

@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Download, FileText, Upload, Music4 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, Download, FileText, Upload, Music4, Edit3 } from 'lucide-react';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import PartEditor from '../components/PartEditor';
 import { exportCapsuleAsZip } from '../utils/capsuleManager';
+import EditCapsuleModal from '../components/EditCapsuleModal';
 
 // ♠️ Nyro: Welcome to the Capsule Sanctum. Here, the abstract becomes concrete.
 // Every element is structured for clarity and focus, allowing the creative energy to flow without obstruction.
@@ -14,6 +15,7 @@ const CapsulePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const capsule = useCapsuleStore((state) => state.getCapsule(id || ''));
   const [activePart, setActivePart] = useState<string | null>(capsule?.parts[0]?.fileName || null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (!capsule) {
     return (
@@ -53,7 +55,19 @@ const CapsulePage: React.FC = () => {
       </div>
 
       <div className="bg-gray-900/50 backdrop-blur-sm border border-portal-border rounded-xl p-6 mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">{capsule.meta.titre}</h1>
+        <div className="flex justify-between items-start mb-4">
+          <h1 className="text-3xl font-bold text-white">{capsule.meta.titre}</h1>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition-colors"
+            title="Edit capsule metadata"
+          >
+            <Edit3 size={18} />
+            Edit Metadata
+          </motion.button>
+        </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-400">
           <span><strong>Key:</strong> {capsule.meta.tonalite}</span>
           <span><strong>Tempo:</strong> {capsule.meta.tempo} BPM</span>
@@ -61,6 +75,15 @@ const CapsulePage: React.FC = () => {
           <span><strong>Version:</strong> {capsule.meta.version}</span>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <EditCapsuleModal
+            capsule={capsule}
+            onClose={() => setIsEditModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Navigation Panel */}

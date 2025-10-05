@@ -7,6 +7,7 @@ export interface Capsule {
   meta: CapsuleMeta;
   parts: Part[];
   sources: SourceFile[];
+  isFavorite?: boolean; // ⭐ Marks the compositions closest to our hearts
   // Renders are ephemeral, generated on demand. Not stored in state.
 }
 
