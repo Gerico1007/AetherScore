@@ -19,6 +19,7 @@
     "svg2pdf.js": "^2.6.0",
     "tailwind-merge": "^2.3.0",
     "typescript": "^5.4.5",
+    "verovio": "^5.6.0",
     "zustand": "^4.5.2"
   },
   "scripts": {
