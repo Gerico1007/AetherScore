@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlusCircle, Star, Trash2, Filter, ArrowUpDown, Edit3, Copy } from 'lucide-react';
+import { Music, PlusCircle, Star, Trash2, Edit3, Copy, ArrowUpDown, Filter } from 'lucide-react';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import CreateCapsuleModal from '../components/CreateCapsuleModal';
 import EditCapsuleModal from '../components/EditCapsuleModal';
@@ -13,8 +13,8 @@ import EditCapsuleModal from '../components/EditCapsuleModal';
 const DashboardPage: React.FC = () => {
   const capsules = useCapsuleStore((state) => state.capsules);
   const deleteCapsule = useCapsuleStore((state) => state.deleteCapsule);
-  const toggleFavorite = useCapsuleStore((state) => state.toggleFavorite);
   const duplicateCapsule = useCapsuleStore((state) => state.duplicateCapsule);
+  const toggleFavorite = useCapsuleStore((state) => state.toggleFavorite);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editCapsuleId, setEditCapsuleId] = useState<string | null>(null);
@@ -71,13 +71,6 @@ const DashboardPage: React.FC = () => {
     setDeleteConfirmId(null);
   };
 
-  // ⭐ Toggle favorite handler
-  const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleFavorite(id);
-  };
-
   // ✏️ Edit handler
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -90,6 +83,13 @@ const DashboardPage: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
     duplicateCapsule(id);
+  };
+
+  // ⭐ Toggle favorite handler
+  const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(id);
   };
 
   return (
@@ -222,6 +222,9 @@ const DashboardPage: React.FC = () => {
                 <Link to={`/capsule/${capsule.id}`}>
                   <div className="h-full bg-gray-900/50 backdrop-blur-sm border border-portal-border rounded-xl p-6 transition-all duration-300 hover:border-aureon-green hover:shadow-2xl hover:shadow-aureon-green/10 transform hover:-translate-y-1">
                     <div className="flex items-center gap-4 mb-3">
+                      <div className="p-2 bg-gray-800 rounded-full">
+                         <Star className="text-aureon-green" size={24} />
+                      </div>
                       <h2 className="text-xl font-bold text-gray-100 truncate">{capsule.meta.titre}</h2>
                     </div>
                     <div className="text-sm text-gray-400 space-y-2">
@@ -245,7 +248,7 @@ const DashboardPage: React.FC = () => {
                     <Star className="text-gray-500 hover:text-yellow-400" size={22} />
                   )}
                 </motion.button>
-                {/* 🎯 Action buttons - appear on hover, top right */}
+                {/* 🎯 Action buttons - appear on hover */}
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   {/* ✏️ Edit button */}
                   <motion.button
