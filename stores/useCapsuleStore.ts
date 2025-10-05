@@ -47,6 +47,7 @@ interface CapsuleState {
   updateCapsuleMeta: (id: string, meta: Partial<CapsuleMeta>) => void;
   updatePartContent: (capsuleId: string, fileName: string, content: string) => void;
   addPart: (capsuleId: string, fileName: string) => void;
+  deleteCapsule: (id: string) => void;
 }
 
 export const useCapsuleStore = create<CapsuleState>()(
@@ -91,10 +92,16 @@ export const useCapsuleStore = create<CapsuleState>()(
          const newPartContent = `X:${capsule.parts.length + 1}\nT:${capsule.meta.titre} (Part ${capsule.parts.length + 1})\nM:${capsule.meta.mesure}\nK:${capsule.meta.tonalite}\nL:1/8\n|:`;
          const newPart: Part = { fileName, content: newPartContent };
           set((state) => ({
-              capsules: state.capsules.map(c => 
+              capsules: state.capsules.map(c =>
                   c.id === capsuleId ? { ...c, parts: [...c.parts, newPart] } : c
               )
           }));
+      },
+      // 🧵 Synth: Delete capsule - removes from state and persisted storage
+      deleteCapsule: (id) => {
+        set((state) => ({
+          capsules: state.capsules.filter(c => c.id !== id)
+        }));
       },
     }),
     {
