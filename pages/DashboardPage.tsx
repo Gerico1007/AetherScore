@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlusCircle, Star, Trash2 } from 'lucide-react';
+import { Music, PlusCircle, Star, Trash2, Edit3, Copy, ArrowUpDown } from 'lucide-react';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import CreateCapsuleModal from '../components/CreateCapsuleModal';
+import EditCapsuleModal from '../components/EditCapsuleModal';
 
 // 🌿 Aureon: This is the Portal Gate, where every journey begins.
 // Each capsule is a world waiting to be explored. Feel the potential humming in the air.
@@ -12,8 +13,39 @@ import CreateCapsuleModal from '../components/CreateCapsuleModal';
 const DashboardPage: React.FC = () => {
   const capsules = useCapsuleStore((state) => state.capsules);
   const deleteCapsule = useCapsuleStore((state) => state.deleteCapsule);
+  const duplicateCapsule = useCapsuleStore((state) => state.duplicateCapsule);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editCapsuleId, setEditCapsuleId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>(() => {
+    return localStorage.getItem('capsule-sort-preference') || 'date-newest';
+  });
+
+  // 🧵 Synth: Sort capsules based on user preference
+  const sortedCapsules = useMemo(() => {
+    const sorted = [...capsules];
+    switch (sortBy) {
+      case 'title-asc':
+        return sorted.sort((a, b) => a.meta.titre.localeCompare(b.meta.titre));
+      case 'title-desc':
+        return sorted.sort((a, b) => b.meta.titre.localeCompare(a.meta.titre));
+      case 'date-newest':
+        return sorted.reverse(); // Newest first (last added)
+      case 'date-oldest':
+        return sorted; // Oldest first
+      case 'tempo-asc':
+        return sorted.sort((a, b) => a.meta.tempo - b.meta.tempo);
+      case 'tempo-desc':
+        return sorted.sort((a, b) => b.meta.tempo - a.meta.tempo);
+      default:
+        return sorted;
+    }
+  }, [capsules, sortBy]);
+
+  const handleSortChange = (newSort: string) => {
+    setSortBy(newSort);
+    localStorage.setItem('capsule-sort-preference', newSort);
+  };
 
   // 🧵 Synth: Delete handler with confirmation
   const handleDelete = (id: string, title: string, e: React.MouseEvent) => {
@@ -33,6 +65,20 @@ const DashboardPage: React.FC = () => {
     setDeleteConfirmId(null);
   };
 
+  // ✏️ Edit handler
+  const handleEdit = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditCapsuleId(id);
+  };
+
+  // 📋 Duplicate handler
+  const handleDuplicate = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    duplicateCapsule(id);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -40,23 +86,49 @@ const DashboardPage: React.FC = () => {
       transition={{ duration: 0.5 }}
       className="container mx-auto"
     >
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aureon-green to-blue-400">
           Capsule Constellation
         </h1>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-aureon-green text-cosmic-bg font-semibold rounded-lg shadow-lg shadow-aureon-green/20"
-        >
-          <PlusCircle size={20} />
-          Invoke Capsule
-        </motion.button>
+        <div className="flex items-center gap-3">
+          {/* 🌀 Sort dropdown */}
+          <div className="flex items-center gap-2 bg-gray-900/50 border border-portal-border rounded-lg px-3 py-2">
+            <ArrowUpDown size={16} className="text-gray-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="bg-transparent text-sm text-gray-300 outline-none cursor-pointer"
+            >
+              <option value="date-newest">Newest First</option>
+              <option value="date-oldest">Oldest First</option>
+              <option value="title-asc">Title (A-Z)</option>
+              <option value="title-desc">Title (Z-A)</option>
+              <option value="tempo-asc">Tempo (Slow to Fast)</option>
+              <option value="tempo-desc">Tempo (Fast to Slow)</option>
+            </select>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-aureon-green text-cosmic-bg font-semibold rounded-lg shadow-lg shadow-aureon-green/20"
+          >
+            <PlusCircle size={20} />
+            Invoke Capsule
+          </motion.button>
+        </div>
       </div>
 
       <AnimatePresence>
         {isModalOpen && <CreateCapsuleModal onClose={() => setIsModalOpen(false)} />}
+
+        {/* ✏️ Edit capsule modal */}
+        {editCapsuleId && (
+          <EditCapsuleModal
+            capsule={capsules.find(c => c.id === editCapsuleId)!}
+            onClose={() => setEditCapsuleId(null)}
+          />
+        )}
 
         {/* 🌿 Aureon: Confirmation dialog - a moment to reflect before letting go */}
         {deleteConfirmId && (
@@ -110,10 +182,10 @@ const DashboardPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {capsules.length > 0 ? (
+      {sortedCapsules.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
-            {capsules.map((capsule, index) => (
+            {sortedCapsules.map((capsule, index) => (
               <motion.div
                 key={capsule.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -137,16 +209,39 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                 </Link>
-                {/* 🔴 Delete button - appears on hover */}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={(e) => handleDelete(capsule.id, capsule.meta.titre, e)}
-                  className="absolute top-4 right-4 p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
-                  title="Delete capsule"
-                >
-                  <Trash2 size={18} />
-                </motion.button>
+                {/* 🎯 Action buttons - appear on hover */}
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {/* ✏️ Edit button */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => handleEdit(capsule.id, e)}
+                    className="p-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg shadow-lg"
+                    title="Edit capsule metadata"
+                  >
+                    <Edit3 size={18} />
+                  </motion.button>
+                  {/* 📋 Duplicate button */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => handleDuplicate(capsule.id, e)}
+                    className="p-2 bg-aureon-green/80 hover:bg-aureon-green text-gray-900 rounded-lg shadow-lg"
+                    title="Duplicate capsule"
+                  >
+                    <Copy size={18} />
+                  </motion.button>
+                  {/* 🔴 Delete button */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => handleDelete(capsule.id, capsule.meta.titre, e)}
+                    className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg shadow-lg"
+                    title="Delete capsule"
+                  >
+                    <Trash2 size={18} />
+                  </motion.button>
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
