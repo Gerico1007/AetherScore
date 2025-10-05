@@ -92,19 +92,19 @@ const DashboardPage: React.FC = () => {
         </h1>
         <div className="flex items-center gap-3">
           {/* 🌀 Sort dropdown */}
-          <div className="flex items-center gap-2 bg-gray-900/50 border border-portal-border rounded-lg px-3 py-2">
-            <ArrowUpDown size={16} className="text-gray-400" />
+          <div className="flex items-center gap-2 bg-gray-800 border border-aureon-green/30 rounded-lg px-4 py-2 shadow-lg shadow-aureon-green/10">
+            <ArrowUpDown size={18} className="text-aureon-green" />
             <select
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="bg-transparent text-sm text-gray-300 outline-none cursor-pointer"
+              className="bg-gray-800 text-base text-gray-100 font-medium outline-none cursor-pointer pr-2"
             >
-              <option value="date-newest">Newest First</option>
-              <option value="date-oldest">Oldest First</option>
-              <option value="title-asc">Title (A-Z)</option>
-              <option value="title-desc">Title (Z-A)</option>
-              <option value="tempo-asc">Tempo (Slow to Fast)</option>
-              <option value="tempo-desc">Tempo (Fast to Slow)</option>
+              <option value="date-newest" className="bg-gray-800 text-gray-100 py-2">Newest First</option>
+              <option value="date-oldest" className="bg-gray-800 text-gray-100 py-2">Oldest First</option>
+              <option value="title-asc" className="bg-gray-800 text-gray-100 py-2">Title (A-Z)</option>
+              <option value="title-desc" className="bg-gray-800 text-gray-100 py-2">Title (Z-A)</option>
+              <option value="tempo-asc" className="bg-gray-800 text-gray-100 py-2">Tempo (Slow to Fast)</option>
+              <option value="tempo-desc" className="bg-gray-800 text-gray-100 py-2">Tempo (Fast to Slow)</option>
             </select>
           </div>
           <motion.button
