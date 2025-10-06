@@ -23,6 +23,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:termux": "FORCE_TERMUX=1 vite",
+    "dev:linux": "FORCE_LINUX=1 vite",
     "build": "vite build",
     "preview": "vite preview"
   },
