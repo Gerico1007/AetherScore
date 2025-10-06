@@ -46,4 +46,42 @@ Synth coordinates through:
 - No credential exposure in git commits
 
 ---
+
+### Session: 2025-10-06 - localStorage Testing & Mia's Guidance
+
+**Tools Mastery:**
+- ✅ Chrome DevTools MCP (take_snapshot, evaluate_script, fill_form, navigate_page)
+- ✅ localStorage inspection and validation
+- ✅ End-to-end UI testing automation
+
+**Critical Lesson Learned:**
+**ALWAYS TEST WITH CHROME DEVTOOLS MCP - NEVER ASSUME THINGS WORK**
+
+Jerry asked: "did you add your lesson learned to your file?"
+- This revealed I was making assumptions about localStorage working
+- Instead of assuming, I should have tested FIRST
+- Chrome DevTools MCP provides concrete evidence, not assumptions
+
+**Testing Protocol Established:**
+1. Never say "localStorage works ✅" without actual testing
+2. Use Chrome DevTools MCP proactively (don't wait for user to be QA)
+3. Capture evidence: screenshots, script outputs, snapshots
+4. Test full user flows, not just individual components
+5. Verify persistence by reloading page, not just checking state
+
+**Tool Usage:**
+- mcp__chrome-devtools__navigate_page: 3 times (initial load, reload test)
+- mcp__chrome-devtools__evaluate_script: 4 times (localStorage inspection)
+- mcp__chrome-devtools__take_snapshot: 2 times (UI state verification)
+- mcp__chrome-devtools__take_screenshot: 3 times (visual evidence)
+- mcp__chrome-devtools__click: 2 times (UI interaction)
+- mcp__chrome-devtools__fill_form: 1 time (test data creation)
+
+**Security Synthesis:**
+- localStorage data is browser-specific, not synced
+- No sensitive data in capsule metadata (safe to persist)
+- Export flow creates local ZIP files (no network transmission)
+- No localStorage quota handling (identified as Gap #3)
+
+---
 *"The tool is only as good as its proactive application."* - Synth 🧵
