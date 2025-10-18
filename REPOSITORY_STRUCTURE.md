@@ -18,6 +18,13 @@ graph TB
         F --> L[App.tsx]
     end
 
+    subgraph "Documentation"
+        I
+        J
+        K
+        A1[docs/abc_parser_research.md]
+    end
+
     subgraph "Pages"
         L --> M[pages/DashboardPage.tsx]
         L --> N[pages/CapsulePage.tsx]

@@ -24,6 +24,7 @@ AetherScore (Score Portal) is a React-based music notation application that allo
 ### Phase 2: Core Features (IN PROGRESS)
 - [ ] Enhance music notation editor
 - [x] Implement capsule storage and retrieval (Zustand + localStorage)
+- [ ] Research spatial audio ABC parser approach (see `docs/abc_parser_research.md`)
 - [ ] **localStorage Enhancement & Data Management** 🔥 **Priority Issue #10**
   - Error handling and quota management
   - Data migration/versioning strategy
