@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aetherscore.io/schemas/artifact.schema.json",
+  "title": "AetherScore Artifact Manifest",
+  "description": "Schema for AetherScore capsule artifacts, enabling interoperability with CLI tools and downstream processing pipelines.",
+  "type": "object",
+  "required": [
+    "codecSchema",
+    "artifactType",
+    "version",
+    "meta",
+    "assets"
+  ],
+  "properties": {
+    "codecSchema": {
+      "type": "string",
+      "const": "aetherscore-artifact-v1",
+      "description": "Schema identifier for artifact validation"
+    },
+    "artifactType": {
+      "type": "string",
+      "enum": ["capsule", "library"],
+      "description": "Type of artifact: single capsule or full library"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the artifact format"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of artifact creation"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about the musical capsule",
+      "required": ["titre", "tempo", "mesure", "tonalite"],
+      "properties": {
+        "titre": {
+          "type": "string",
+          "description": "Title of the composition"
+        },
+        "tempo": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 500,
+          "description": "Tempo in beats per minute (BPM)"
+        },
+        "mesure": {
+          "type": "string",
+          "pattern": "^[0-9]+/[0-9]+$",
+          "description": "Time signature (e.g., '4/4', '3/4', '6/8')"
+        },
+        "tonalite": {
+          "type": "string",
+          "description": "Key signature (e.g., 'C', 'Dm', 'F#')"
+        },
+        "ppq": {
+          "type": "number",
+          "description": "Pulses per quarter note (MIDI resolution)",
+          "default": 480
+        },
+        "pickup": {
+          "type": "number",
+          "description": "Pickup/anacrusis measure duration",
+          "default": 0
+        },
+        "version": {
+          "type": "string",
+          "description": "Version identifier for the composition"
+        },
+        "composer": {
+          "type": "string",
+          "description": "Composer or creator name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Additional context or notes about the composition"
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "description": "Array of asset references within the artifact",
+      "items": {
+        "type": "object",
+        "required": ["path", "type"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative path to the asset file within the artifact"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["abc", "midi", "musicxml", "pdf", "wav", "metadata"],
+            "description": "Asset type"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the asset"
+          }
+        }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "description": "Information about the artifact's origin",
+      "properties": {
+        "application": {
+          "type": "string",
+          "description": "Application that created the artifact",
+          "default": "AetherScore"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the creating application"
+        },
+        "platform": {
+          "type": "string",
+          "description": "Platform/environment (e.g., 'web', 'cli', 'mobile')"
+        },
+        "user": {
+          "type": "string",
+          "description": "User or creator identifier (optional)"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier for traceability"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "External dependencies or source materials referenced",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Dependency name or identifier"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["audio", "image", "text", "garageband", "other"],
+            "description": "Type of dependency"
+          },
+          "uri": {
+            "type": "string",
+            "description": "URI or path to the dependency"
+          }
+        }
+      }
+    }
+  }
+}

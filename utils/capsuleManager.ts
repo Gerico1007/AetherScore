@@ -7,6 +7,51 @@ import type { Capsule } from '../types';
 // This function encapsulates the logic for packaging a capsule, ensuring a perfect, portable replica of the creative spark.
 
 /**
+ * Generate artifact manifest for CLI interoperability
+ * @param capsule - The capsule to create manifest for
+ * @returns Artifact manifest object
+ */
+const generateArtifactManifest = (capsule: Capsule) => {
+  return {
+    codecSchema: 'aetherscore-artifact-v1',
+    artifactType: 'capsule',
+    version: '1.0.0',
+    created: new Date().toISOString(),
+    meta: {
+      titre: capsule.meta.titre,
+      tempo: capsule.meta.tempo,
+      mesure: capsule.meta.mesure,
+      tonalite: capsule.meta.tonalite,
+      ppq: capsule.meta.ppq,
+      pickup: capsule.meta.pickup,
+      version: capsule.meta.version,
+    },
+    assets: [
+      ...capsule.parts.map((part) => ({
+        path: `parts/${part.fileName}`,
+        type: 'abc' as const,
+        description: `ABC notation source: ${part.fileName}`,
+      })),
+      {
+        path: 'sources/.capsule.json',
+        type: 'metadata' as const,
+        description: 'Legacy capsule metadata (deprecated, use .artifact.json)',
+      },
+    ],
+    origin: {
+      application: 'AetherScore',
+      version: 'v0.1.0', // TODO: Pull from package.json
+      platform: 'web',
+    },
+    dependencies: capsule.sources?.map((source) => ({
+      name: source.fileName,
+      type: source.type,
+      uri: source.fileName,
+    })) || [],
+  };
+};
+
+/**
  * Creates a ZIP archive of a musical capsule and triggers a download.
  * @param capsule The capsule object to be archived.
  */
@@ -19,26 +64,30 @@ export const exportCapsuleAsZip = async (capsule: Capsule): Promise<void> => {
       return;
   }
 
-  // 1. 🎯 Add capsule.json
+  // 1. 🎯 Add .artifact.json (CLI interoperability manifest)
+  const artifactManifest = generateArtifactManifest(capsule);
+  rootFolder.file('.artifact.json', JSON.stringify(artifactManifest, null, 2));
+
+  // 2. 🎯 Add sources/.capsule.json (legacy metadata)
   const capsuleJsonContent = {
       ...capsule.meta,
       parts: capsule.parts.map(p => p.fileName)
   };
-  rootFolder.file('capsule.json', JSON.stringify(capsuleJsonContent, null, 2));
+  const sourcesFolder = rootFolder.folder('sources');
+  if(sourcesFolder) {
+    sourcesFolder.file('.capsule.json', JSON.stringify(capsuleJsonContent, null, 2));
+    // In a real app, you'd iterate through `capsule.sources` and add them.
+    if (capsule.sources && capsule.sources.length === 0) {
+      sourcesFolder.file('.gitkeep', '');
+    }
+  }
 
-  // 2. 📝 Add parts/
+  // 3. 📝 Add parts/
   const partsFolder = rootFolder.folder('parts');
   if(partsFolder) {
     capsule.parts.forEach(part => {
         partsFolder.file(part.fileName, part.content);
     });
-  }
-
-  // 3. 🎤 Add sources/ (placeholder)
-  const sourcesFolder = rootFolder.folder('sources');
-  if(sourcesFolder) {
-    // In a real app, you'd iterate through `capsule.sources` and add them.
-    sourcesFolder.file('.gitkeep', '');
   }
 
   // 4. 🎵 Add rendus/ (placeholder)
