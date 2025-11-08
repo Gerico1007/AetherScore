@@ -1,11 +1,13 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlusCircle, Star, Trash2, Edit3, Copy, ArrowUpDown, Filter } from 'lucide-react';
+import { Music, PlusCircle, Star, Trash2, Edit3, Copy, ArrowUpDown, Filter, Download, Upload, Database } from 'lucide-react';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
+import { useSessionStore } from '../stores/useSessionStore';
 import CreateCapsuleModal from '../components/CreateCapsuleModal';
 import EditCapsuleModal from '../components/EditCapsuleModal';
+import { downloadLibraryAsJSON, importLibraryFromJSON } from '../utils/libraryBackup';
 
 // 🌿 Aureon: This is the Portal Gate, where every journey begins.
 // Each capsule is a world waiting to be explored. Feel the potential humming in the air.
@@ -15,13 +17,20 @@ const DashboardPage: React.FC = () => {
   const deleteCapsule = useCapsuleStore((state) => state.deleteCapsule);
   const duplicateCapsule = useCapsuleStore((state) => state.duplicateCapsule);
   const toggleFavorite = useCapsuleStore((state) => state.toggleFavorite);
+  const importCapsules = useCapsuleStore((state) => state.importCapsules);
+
+  // 🧵 Synth: Session state from dedicated session store
+  const sortBy = useSessionStore((state) => state.sortPreference);
+  const setSortPreference = useSessionStore((state) => state.setSortPreference);
+  const showOnlyFavorites = useSessionStore((state) => state.showOnlyFavorites);
+  const setShowOnlyFavorites = useSessionStore((state) => state.setShowOnlyFavorites);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editCapsuleId, setEditCapsuleId] = useState<string | null>(null);
-  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
-  const [sortBy, setSortBy] = useState<string>(() => {
-    return localStorage.getItem('capsule-sort-preference') || 'date-newest';
-  });
+  const [importStrategy, setImportStrategy] = useState<'merge' | 'replace' | null>(null);
+  const [importError, setImportError] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 🌀 Sort and filter capsules (favorites + sort combined)
   const filteredAndSortedCapsules = useMemo(() => {
@@ -49,8 +58,7 @@ const DashboardPage: React.FC = () => {
   }, [capsules, showOnlyFavorites, sortBy]);
 
   const handleSortChange = (newSort: string) => {
-    setSortBy(newSort);
-    localStorage.setItem('capsule-sort-preference', newSort);
+    setSortPreference(newSort as any); // Zustand handles persistence automatically
   };
 
   // 🧵 Synth: Delete handler with confirmation
@@ -92,6 +100,39 @@ const DashboardPage: React.FC = () => {
     toggleFavorite(id);
   };
 
+  // 🧵 Synth: Export library handler
+  const handleExportLibrary = () => {
+    downloadLibraryAsJSON(capsules);
+  };
+
+  // 🧵 Synth: Import library handler
+  const handleImportLibrary = (strategy: 'merge' | 'replace') => {
+    setImportStrategy(strategy);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !importStrategy) return;
+
+    importLibraryFromJSON(
+      file,
+      (importedCapsules, metadata) => {
+        importCapsules(importedCapsules, importStrategy);
+        setImportError([]);
+        setImportStrategy(null);
+        alert(`Successfully imported ${importedCapsules.length} capsules using ${importStrategy} strategy!`);
+      },
+      (errors) => {
+        setImportError(errors);
+        alert(`Import failed:\n${errors.join('\n')}`);
+      }
+    );
+
+    // Reset file input
+    e.target.value = '';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -99,12 +140,24 @@ const DashboardPage: React.FC = () => {
       transition={{ duration: 0.5 }}
       className="container mx-auto"
     >
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aureon-green to-blue-400">
-          Capsule Constellation
-        </h1>
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aureon-green to-blue-400">
+            Capsule Constellation
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">{capsules.length} capsule{capsules.length !== 1 ? 's' : ''} in your library</p>
+        </div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* ⭐ Favorites filter toggle */}
+          {/* ⭐ Favorites filter toggle - persisted via session store */}
           <div className="flex items-center gap-2 bg-gray-800 border border-aureon-green/30 rounded-lg px-4 py-2 shadow-lg shadow-aureon-green/10">
             <Filter size={18} className="text-aureon-green" />
             <select
@@ -131,6 +184,47 @@ const DashboardPage: React.FC = () => {
               <option value="tempo-asc" className="bg-gray-800 text-gray-100 py-2">Tempo (Slow to Fast)</option>
               <option value="tempo-desc" className="bg-gray-800 text-gray-100 py-2">Tempo (Fast to Slow)</option>
             </select>
+          </div>
+          {/* 🧵 Synth: Library backup/restore controls */}
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleExportLibrary}
+              className="flex items-center gap-2 px-3 py-2 bg-nyro-blue/80 hover:bg-nyro-blue text-white font-medium rounded-lg shadow-lg"
+              title="Export all capsules as JSON backup"
+            >
+              <Download size={18} />
+              <span className="hidden sm:inline">Export</span>
+            </motion.button>
+            <div className="relative group">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 px-3 py-2 bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded-lg shadow-lg"
+                title="Import capsules from JSON backup"
+              >
+                <Upload size={18} />
+                <span className="hidden sm:inline">Import</span>
+              </motion.button>
+              {/* Dropdown menu for import strategy */}
+              <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-purple-600/50 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <button
+                  onClick={() => handleImportLibrary('merge')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-purple-600/20 rounded-t-lg transition-colors"
+                >
+                  <div className="font-semibold">Merge</div>
+                  <div className="text-xs text-gray-400">Add to existing capsules</div>
+                </button>
+                <button
+                  onClick={() => handleImportLibrary('replace')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-purple-600/20 rounded-b-lg transition-colors"
+                >
+                  <div className="font-semibold text-red-400">Replace All</div>
+                  <div className="text-xs text-gray-400">Delete current library</div>
+                </button>
+              </div>
+            </div>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}

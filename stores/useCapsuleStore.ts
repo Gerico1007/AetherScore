@@ -1,10 +1,24 @@
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import type { Capsule, CapsuleMeta, Part } from '../types';
+import { safeLocalStorageSet, safeLocalStorageGet, safeLocalStorageRemove } from '../utils/storageHelpers';
 
 // 🎸 JamAI: This is our shared memory, our collective consciousness.
 // Every change here ripples through the portal, keeping all our creations in harmony.
+
+// 🧵 Synth: Safe localStorage wrapper with error handling
+const safeStorage: StateStorage = {
+  getItem: (name: string): string | null => {
+    return safeLocalStorageGet(name);
+  },
+  setItem: (name: string, value: string): void => {
+    safeLocalStorageSet(name, value);
+  },
+  removeItem: (name: string): void => {
+    safeLocalStorageRemove(name);
+  },
+};
 
 // Seed data for a multi-voice piece, as requested.
 const zochartiLochSeed: Part = {
@@ -50,6 +64,9 @@ interface CapsuleState {
   deleteCapsule: (id: string) => void;
   toggleFavorite: (id: string) => void;
   duplicateCapsule: (id: string) => Capsule | null;
+  // 🧵 Synth: Library backup/restore operations
+  importCapsules: (capsules: Capsule[], strategy: 'merge' | 'replace') => void;
+  replaceAllCapsules: (capsules: Capsule[]) => void;
 }
 
 export const useCapsuleStore = create<CapsuleState>()(
@@ -132,10 +149,40 @@ export const useCapsuleStore = create<CapsuleState>()(
         set((state) => ({ capsules: [...state.capsules, duplicate] }));
         return duplicate;
       },
+      // 🧵 Synth: Import capsules with merge or replace strategy
+      importCapsules: (capsules, strategy) => {
+        if (strategy === 'replace') {
+          set({ capsules });
+        } else {
+          // Merge strategy: handle ID conflicts
+          const existingIds = new Set(get().capsules.map((c) => c.id));
+          const timestamp = Date.now();
+
+          const resolvedImports = capsules.map((capsule) => {
+            if (existingIds.has(capsule.id)) {
+              return {
+                ...capsule,
+                id: `${capsule.id}-imported-${timestamp}`,
+                meta: {
+                  ...capsule.meta,
+                  titre: `${capsule.meta.titre} (Imported)`,
+                },
+              };
+            }
+            return capsule;
+          });
+
+          set((state) => ({ capsules: [...state.capsules, ...resolvedImports] }));
+        }
+      },
+      // 🧵 Synth: Replace all capsules (alias for clarity)
+      replaceAllCapsules: (capsules) => {
+        set({ capsules });
+      },
     }),
     {
-      name: 'score-portal-storage',
-      storage: createJSONStorage(() => localStorage),
+      name: 'score-portal-project',
+      storage: createJSONStorage(() => safeStorage),
       onRehydrateStorage: () => (state) => {
         if (state && state.capsules.length === 0) {
           // 🌿 Aureon: On first entry, let's plant a seed of inspiration.

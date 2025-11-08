@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Download, FileText, Upload, Music4, Edit3 } from 'lucide-react';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
+import { useSessionStore } from '../stores/useSessionStore';
 import PartEditor from '../components/PartEditor';
 import { exportCapsuleAsZip } from '../utils/capsuleManager';
 import EditCapsuleModal from '../components/EditCapsuleModal';
@@ -14,8 +15,16 @@ import EditCapsuleModal from '../components/EditCapsuleModal';
 const CapsulePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const capsule = useCapsuleStore((state) => state.getCapsule(id || ''));
+  const setLastEditedCapsuleId = useSessionStore((state) => state.setLastEditedCapsuleId);
   const [activePart, setActivePart] = useState<string | null>(capsule?.parts[0]?.fileName || null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // 🧵 Synth: Track last edited capsule in session store
+  useEffect(() => {
+    if (id) {
+      setLastEditedCapsuleId(id);
+    }
+  }, [id, setLastEditedCapsuleId]);
 
   if (!capsule) {
     return (
