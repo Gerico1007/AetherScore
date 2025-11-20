@@ -1,14 +1,22 @@
-# Enhancement Plan: Issue #20 - Integrate abcjs.Editor Component
+# Enhancement Plan: Issue #20 - Professional ABC Editor (Comprehensive)
 
 **Issue:** https://github.com/Gerico1007/AetherScore/issues/20
 **Branch:** `20-integrate-abcjs-editor`
-**Status:** In Progress
+**Status:** Phase 1 Complete ✅ | Phase 2 In Progress
 
 ---
 
-## 🎯 Enhancement Summary
+## 🎯 Enhancement Summary (EXPANDED SCOPE)
 
-Replace the basic textarea in `PartEditor.tsx` with the full **abcjs.Editor** component to provide professional ABC notation editing features including selection sync, auto-rendering, and error display.
+Transform AetherScore into a **professional web-based ABC notation IDE** with:
+- **CodeMirror 6** editor with ABC syntax highlighting
+- **Interactive toolbar** for visual editing assistance
+- **ABC Builder utilities** for programmatic manipulation
+- **Enhanced selection sync** between code and rendered notation
+- **Advanced features**: templates, autocomplete, drag-to-transpose
+
+**Timeline**: 8-12 weeks (5 phases)
+**Research**: See `COMPREHENSIVE_EDITOR_RESEARCH.md` for full analysis
 
 ---
 
@@ -173,6 +181,170 @@ Before merging to `main`:
 3. Code review completed
 4. Enhancement plan updated with findings
 5. Documentation updated if needed
+
+---
+
+## 🚀 COMPREHENSIVE IMPLEMENTATION PHASES
+
+### Phase 1: abcjs.Editor Foundation ✅ COMPLETE
+**Timeline**: Week 1-2 (Completed 2025-11-09)
+**Status**: ✅ Merged to branch
+
+**Completed Tasks**:
+- ✅ Added refs for textarea, editor instance, warnings
+- ✅ Initialized abcjs.Editor with auto-rendering
+- ✅ Enabled selection sync (click notation → highlights code)
+- ✅ Added parser warnings display
+- ✅ Maintained MIDI playback and PDF export
+- ✅ Preserved Zustand store persistence
+
+**Deliverables**:
+- Enhanced PartEditor.tsx with abcjs.Editor
+- Selection sync functional
+- Error warnings display
+- Build verified (no TypeScript errors)
+
+---
+
+### Phase 2: CodeMirror 6 Integration 🔄 IN PROGRESS
+**Timeline**: Week 3-4
+**Status**: 🔄 Starting now
+
+**Tasks**:
+1. ✅ Install CodeMirror 6 dependencies
+   ```bash
+   npm install @uiw/react-codemirror @codemirror/language @codemirror/state @codemirror/view
+   ```
+
+2. ⏳ Create custom ABC language definition
+   - File: `/utils/abcLanguage.ts`
+   - Define tokens: headers (X:, T:, K:, M:), notes, bars, durations
+   - Syntax highlighting rules
+
+3. ⏳ Replace textarea with CodeMirror component
+   - Update PartEditor.tsx
+   - Maintain abcjs rendering integration
+   - Preserve MIDI and PDF export
+
+4. ⏳ Test syntax highlighting and rendering
+   - Verify highlighting works
+   - Ensure abcjs rendering still functions
+   - Check MIDI playback
+   - Test PDF export
+
+**Deliverables**:
+- CodeMirror 6 editor with ABC syntax highlighting
+- No regression in existing features
+- Professional code editor appearance
+
+---
+
+### Phase 3: ABC Builder Utilities
+**Timeline**: Week 5-6
+**Status**: 📋 Planned
+
+**Tasks**:
+1. Create `/utils/abcBuilder.ts` module
+
+2. Implement core functions:
+   - `insertNote()` - Insert note at cursor position
+   - `transposeRange()` - Transpose selected notes
+   - `setHeader()` - Update ABC headers
+   - `validateABC()` - Wrapper around abcjs parseOnly
+   - `insertMeasure()` - Add measure at position
+
+3. Write unit tests for each function
+
+4. Integrate with PartEditor for basic operations
+
+**Deliverables**:
+- Tested ABC manipulation utilities
+- Documentation for each function
+- Integration examples
+
+---
+
+### Phase 4: Interactive Toolbar
+**Timeline**: Week 7-8
+**Status**: 📋 Planned
+
+**Tasks**:
+1. Create `/components/EditorToolbar.tsx`
+
+2. Design and implement sections:
+   - **Duration Selector**: Buttons for whole, half, quarter, eighth, sixteenth notes
+   - **Accidental Buttons**: Sharp, flat, natural, double sharp, double flat
+   - **Key/Time Signature Pickers**: Dropdowns for common keys and time signatures
+   - **Structure Tools**: New measure, repeat symbols, voice separators
+   - **Smart Templates**: Common patterns (scales, arpeggios, progressions)
+
+3. Wire up to CodeMirror cursor position
+
+4. Use abcBuilder utilities to insert ABC text
+
+5. Style with Tailwind (match AetherScore theme)
+
+**Deliverables**:
+- Functional toolbar with note insertion
+- Professional UI matching AetherScore design
+- Visual editing assistance for common operations
+
+---
+
+### Phase 5: Advanced Features
+**Timeline**: Week 9-10
+**Status**: 📋 Planned
+
+**Tasks**:
+1. **Enhanced Selection Sync**:
+   - Click rendered notation → select text in CodeMirror
+   - Select text in CodeMirror → highlight in rendered notation
+   - Use abcjs `clickListener` + CodeMirror selection API
+
+2. **Drag to Transpose** (Optional):
+   - Enable abcjs `dragging: true`
+   - On drag callback, use `transposeRange()` to update ABC
+   - Re-render notation
+
+3. **Smart Templates**:
+   - Dropdown with common patterns
+   - Insert at cursor position
+
+4. **Autocomplete**:
+   - CodeMirror autocomplete extension
+   - Suggest note names, header values, common patterns
+
+5. **Additional Polish**:
+   - Keyboard shortcuts
+   - Copy/paste enhancements
+   - Multi-cursor support
+
+**Deliverables**:
+- Full bi-directional selection sync
+- Optional drag-to-transpose feature
+- Template insertion system
+- Autocomplete functionality
+
+---
+
+### Phase 6: Polish & Testing
+**Timeline**: Week 11-12
+**Status**: 📋 Planned
+
+**Tasks**:
+1. Cross-browser testing (Chrome, Firefox, Safari, mobile)
+2. Mobile responsiveness testing
+3. Performance profiling (CodeMirror render speed, large ABC files)
+4. Bug fixes and edge case handling
+5. Update documentation (ROADMAP, README, user guide)
+6. User testing with G.Music team
+7. Create user guide with screenshots
+
+**Deliverables**:
+- Polished, production-ready enhanced editor
+- Updated documentation
+- User guide with examples
+- Performance benchmarks
 
 ---
 

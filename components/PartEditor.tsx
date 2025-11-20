@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import abcjs from 'abcjs';
+import CodeMirror from '@uiw/react-codemirror';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import type { Part } from '../types';
 import { Bot, SlidersHorizontal, Music2, BrainCircuit, FileDown, Loader2 } from 'lucide-react';
 import { exportToPDF } from '../utils/pdfExporter';
+import { abcLanguage } from '../utils/abcLanguage';
 
 interface PartEditorProps {
   part: Part;
@@ -21,9 +23,8 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
 
   const notationRef = useRef<HTMLDivElement>(null);
   const midiRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const editorRef = useRef<any>(null);
   const warningsRef = useRef<HTMLDivElement>(null);
+  const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 🧵 Synth: PDF export handler with error boundary
   const handlePdfExport = async () => {
@@ -43,60 +44,98 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
     }
   };
 
+  // ♠️ Nyro: Render ABC notation and MIDI with debouncing
   useEffect(() => {
-    // ♠️ Nyro: Initialize abcjs.Editor for automatic rendering, selection sync, and error display
-    if (!textareaRef.current || !notationRef.current) return;
+    // Clear previous timeout
+    if (renderTimeoutRef.current) {
+      clearTimeout(renderTimeoutRef.current);
+    }
 
-    editorRef.current = new abcjs.Editor(textareaRef.current, {
-      canvas_id: notationRef.current,
-      warnings_id: warningsRef.current,
-      onchange: (editor: any) => {
-        // Get current ABC content from editor
-        const content = editor.editarea.getString();
+    // Debounce rendering (300ms for responsive feel)
+    renderTimeoutRef.current = setTimeout(() => {
+      // Update Zustand store for persistence
+      updatePartContent(capsuleId, part.fileName, abcContent);
 
-        // Update Zustand store for persistence
-        updatePartContent(capsuleId, part.fileName, content);
+      // Render notation
+      if (notationRef.current) {
+        try {
+          // Clear warnings
+          if (warningsRef.current) {
+            warningsRef.current.innerHTML = "";
+          }
 
-        // Update local state for PDF export
-        setAbcContent(content);
+          abcjs.renderAbc(notationRef.current, abcContent, {
+            responsive: "resize",
+            staffwidth: notationRef.current.clientWidth - 20,
+            paddingleft: 10,
+            paddingright: 10,
+            add_classes: true,
+            oneSvgPerLine: false
+          });
+        } catch (error: any) {
+          // Display parsing errors
+          if (warningsRef.current) {
+            warningsRef.current.innerHTML = `<span class="text-red-400">⚠️ ${error.message}</span>`;
+          }
+        }
+      }
 
-        // 🎸 JamAI: Render MIDI playback (Editor doesn't auto-handle this)
-        if (midiRef.current) {
-          midiRef.current.innerHTML = "";
-          abcjs.renderMidi(midiRef.current, content, {
+      // 🎸 JamAI: Render MIDI playback
+      if (midiRef.current) {
+        midiRef.current.innerHTML = "";
+        try {
+          abcjs.renderMidi(midiRef.current, abcContent, {
             generateDownload: true,
             downloadLabel: "Download MIDI"
           });
+        } catch (error) {
+          // Silently fail MIDI rendering if ABC is invalid
+          console.warn('MIDI rendering failed:', error);
         }
-      },
-      abcjsParams: {
-        responsive: "resize",
-        staffwidth: notationRef.current.clientWidth - 20,
-        paddingleft: 10,
-        paddingright: 10,
-      },
-      indicate_changed: true,
-    });
+      }
+    }, 300);
 
-    // Cleanup editor instance on unmount
     return () => {
-      if (editorRef.current) {
-        editorRef.current = null;
+      if (renderTimeoutRef.current) {
+        clearTimeout(renderTimeoutRef.current);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [abcContent, part.fileName, capsuleId]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
       <div className="flex flex-col h-[70vh]">
         <h3 className="text-lg font-semibold mb-2 text-gray-300">ABC Scribe</h3>
-        <textarea
-          ref={textareaRef}
-          defaultValue={part.content}
-          className="flex-grow bg-gray-900/80 border border-portal-border rounded-md p-4 font-mono text-sm text-aureon-green resize-none outline-none focus:ring-2 focus:ring-aureon-green"
-          spellCheck="false"
-        />
+        <div className="flex-grow overflow-hidden rounded-md border border-portal-border">
+          <CodeMirror
+            value={abcContent}
+            onChange={(value) => setAbcContent(value)}
+            extensions={[abcLanguage]}
+            theme="dark"
+            basicSetup={{
+              lineNumbers: true,
+              highlightActiveLine: true,
+              highlightSelectionMatches: true,
+              foldGutter: true,
+              dropCursor: true,
+              indentOnInput: false,
+              syntaxHighlighting: true,
+              bracketMatching: true,
+              closeBrackets: true,
+              autocompletion: false,
+              rectangularSelection: true,
+              crosshairCursor: true,
+              highlightActiveLineGutter: true
+            }}
+            style={{
+              height: '100%',
+              fontSize: '14px',
+              fontFamily: 'monospace'
+            }}
+            className="h-full"
+          />
+        </div>
         {/* 🌿 Aureon: Parser warnings appear here when ABC notation has errors */}
         <div
           ref={warningsRef}
