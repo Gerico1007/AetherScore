@@ -7,6 +7,8 @@ import type { Part } from '../types';
 import { Bot, SlidersHorizontal, Music2, BrainCircuit, FileDown, Loader2 } from 'lucide-react';
 import { exportToPDF } from '../utils/pdfExporter';
 import { abcLanguage } from '../utils/abcLanguage';
+import { setHeader } from '../utils/abcBuilder';
+import EditorToolbar from './EditorToolbar';
 
 interface PartEditorProps {
   part: Part;
@@ -25,6 +27,22 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
   const midiRef = useRef<HTMLDivElement>(null);
   const warningsRef = useRef<HTMLDivElement>(null);
   const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cursorPositionRef = useRef<number>(0);
+
+  // 🎸 JamAI: Handle toolbar insertions at cursor position
+  const handleToolbarInsert = (text: string) => {
+    const pos = cursorPositionRef.current;
+    const newContent = abcContent.slice(0, pos) + text + abcContent.slice(pos);
+    setAbcContent(newContent);
+    // Update cursor position after insertion
+    cursorPositionRef.current = pos + text.length;
+  };
+
+  // Handle header updates from toolbar
+  const handleSetHeader = (key: string, value: string) => {
+    const newContent = setHeader(abcContent, key, value);
+    setAbcContent(newContent);
+  };
 
   // 🧵 Synth: PDF export handler with error boundary
   const handlePdfExport = async () => {
@@ -104,38 +122,57 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
   }, [abcContent, part.fileName, capsuleId]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-      <div className="flex flex-col h-[70vh]">
-        <h3 className="text-lg font-semibold mb-2 text-gray-300">ABC Scribe</h3>
-        <div className="flex-grow overflow-hidden rounded-md border border-portal-border">
-          <CodeMirror
-            value={abcContent}
-            onChange={(value) => setAbcContent(value)}
-            extensions={[abcLanguage]}
-            theme="dark"
-            basicSetup={{
-              lineNumbers: true,
-              highlightActiveLine: true,
-              highlightSelectionMatches: true,
-              foldGutter: true,
-              dropCursor: true,
-              indentOnInput: false,
-              syntaxHighlighting: true,
-              bracketMatching: true,
-              closeBrackets: true,
-              autocompletion: false,
-              rectangularSelection: true,
-              crosshairCursor: true,
-              highlightActiveLineGutter: true
-            }}
-            style={{
-              height: '100%',
-              fontSize: '14px',
-              fontFamily: 'monospace'
-            }}
-            className="h-full"
-          />
-        </div>
+    <div className="flex flex-col h-full">
+      {/* 🎸 JamAI: Interactive Toolbar */}
+      <EditorToolbar
+        onInsert={handleToolbarInsert}
+        onSetHeader={handleSetHeader}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+        <div className="flex flex-col h-[65vh]">
+          <h3 className="text-lg font-semibold mb-2 text-gray-300">ABC Scribe</h3>
+          <div className="flex-grow overflow-hidden rounded-md border border-portal-border">
+            <CodeMirror
+              value={abcContent}
+              onChange={(value, viewUpdate) => {
+                setAbcContent(value);
+                // Track cursor position for toolbar insertions
+                if (viewUpdate.state.selection.main) {
+                  cursorPositionRef.current = viewUpdate.state.selection.main.head;
+                }
+              }}
+              onStatistics={(data) => {
+                // Update cursor position on selection change
+                if (data.selectionAsSingle) {
+                  cursorPositionRef.current = data.selectionAsSingle;
+                }
+              }}
+              extensions={[abcLanguage]}
+              theme="dark"
+              basicSetup={{
+                lineNumbers: true,
+                highlightActiveLine: true,
+                highlightSelectionMatches: true,
+                foldGutter: true,
+                dropCursor: true,
+                indentOnInput: false,
+                syntaxHighlighting: true,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: false,
+                rectangularSelection: true,
+                crosshairCursor: true,
+                highlightActiveLineGutter: true
+              }}
+              style={{
+                height: '100%',
+                fontSize: '14px',
+                fontFamily: 'monospace'
+              }}
+              className="h-full"
+            />
+          </div>
         {/* 🌿 Aureon: Parser warnings appear here when ABC notation has errors */}
         <div
           ref={warningsRef}
@@ -143,10 +180,10 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
         />
       </div>
 
-      <div className="flex flex-col gap-6 h-[70vh]">
+      <div className="flex flex-col gap-6 h-[65vh]">
         <div>
           <h3 className="text-lg font-semibold mb-2 text-gray-300">Live Notation</h3>
-          <div ref={notationRef} className="bg-gray-900/80 border border-portal-border rounded-md p-4 overflow-auto max-h-[25vh]"></div>
+          <div ref={notationRef} className="bg-gray-900/80 border border-portal-border rounded-md p-4 overflow-auto max-h-[20vh]"></div>
         </div>
         
         <div>
@@ -180,6 +217,7 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
                 </button>
             </div>
             <p className="text-xs text-gray-500 mt-2">✨ PDF export now available! MusicXML & WAV coming in v0.2</p>
+        </div>
         </div>
       </div>
     </div>
