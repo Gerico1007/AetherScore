@@ -19,7 +19,9 @@ import {
   RotateCcw,
   Repeat,
   Type,
-  Settings2
+  Settings2,
+  Pin,
+  PinOff
 } from 'lucide-react';
 import {
   buildNote,
@@ -40,6 +42,8 @@ interface EditorToolbarProps {
   onInsert: (text: string) => void;
   onSetHeader?: (key: string, value: string) => void;
   disabled?: boolean;
+  floating?: boolean;
+  onToggleFloating?: () => void;
 }
 
 interface DurationOption {
@@ -96,7 +100,9 @@ const TIME_SIGNATURES = [
 const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onInsert,
   onSetHeader,
-  disabled = false
+  disabled = false,
+  floating = false,
+  onToggleFloating
 }) => {
   // State for current selections
   const [selectedDuration, setSelectedDuration] = useState('');
@@ -140,7 +146,11 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   };
 
   return (
-    <div className={`bg-gray-800/90 border border-portal-border rounded-lg p-3 mb-4 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={`
+      bg-gray-800/95 border border-portal-border rounded-lg p-3 mb-4
+      ${disabled ? 'opacity-50 pointer-events-none' : ''}
+      ${floating ? 'fixed top-4 left-4 right-4 z-50 shadow-2xl backdrop-blur-sm' : ''}
+    `}>
       {/* Main Toolbar Row */}
       <div className="flex flex-wrap items-center gap-4">
 
@@ -272,6 +282,19 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
 
         {/* Spacer */}
         <div className="flex-grow" />
+
+        {/* 📌 Float Toggle */}
+        {onToggleFloating && (
+          <button
+            onClick={onToggleFloating}
+            className={`p-2 rounded transition-colors ${
+              floating ? 'bg-purple-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
+            }`}
+            title={floating ? 'Dock toolbar' : 'Float toolbar'}
+          >
+            {floating ? <PinOff size={16} /> : <Pin size={16} />}
+          </button>
+        )}
 
         {/* ⚙️ Settings Toggle */}
         <button

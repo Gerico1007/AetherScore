@@ -22,6 +22,7 @@ interface PartEditorProps {
 const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
   const [abcContent, setAbcContent] = useState(part.content);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
+  const [isToolbarFloating, setIsToolbarFloating] = useState(false);
   const updatePartContent = useCapsuleStore((state) => state.updatePartContent);
 
   const notationRef = useRef<HTMLDivElement>(null);
@@ -142,7 +143,12 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
       <EditorToolbar
         onInsert={handleToolbarInsert}
         onSetHeader={handleSetHeader}
+        floating={isToolbarFloating}
+        onToggleFloating={() => setIsToolbarFloating(!isToolbarFloating)}
       />
+
+      {/* Spacer when toolbar is floating */}
+      {isToolbarFloating && <div className="h-24" />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
         <div className="flex flex-col h-[65vh]">
