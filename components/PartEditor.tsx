@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import abcjs from 'abcjs';
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { EditorView } from '@codemirror/view';
 import { useCapsuleStore } from '../stores/useCapsuleStore';
 import type { Part } from '../types';
 import { Bot, SlidersHorizontal, Music2, BrainCircuit, FileDown, Loader2 } from 'lucide-react';
@@ -27,16 +28,30 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
   const midiRef = useRef<HTMLDivElement>(null);
   const warningsRef = useRef<HTMLDivElement>(null);
   const renderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const cursorPositionRef = useRef<number>(0);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   // 🎸 JamAI: Handle toolbar insertions at cursor position
-  const handleToolbarInsert = (text: string) => {
-    const pos = cursorPositionRef.current;
+  const handleToolbarInsert = useCallback((text: string) => {
+    // Get current cursor position from CodeMirror
+    const view = editorRef.current?.view;
+    if (!view) {
+      // Fallback: insert at end if no view
+      setAbcContent(prev => prev + text);
+      return;
+    }
+
+    const pos = view.state.selection.main.head;
     const newContent = abcContent.slice(0, pos) + text + abcContent.slice(pos);
     setAbcContent(newContent);
-    // Update cursor position after insertion
-    cursorPositionRef.current = pos + text.length;
-  };
+
+    // Move cursor to after the inserted text
+    setTimeout(() => {
+      view.dispatch({
+        selection: { anchor: pos + text.length }
+      });
+      view.focus();
+    }, 10);
+  }, [abcContent]);
 
   // Handle header updates from toolbar
   const handleSetHeader = (key: string, value: string) => {
@@ -134,20 +149,9 @@ const PartEditor: React.FC<PartEditorProps> = ({ part, capsuleId }) => {
           <h3 className="text-lg font-semibold mb-2 text-gray-300">ABC Scribe</h3>
           <div className="flex-grow overflow-hidden rounded-md border border-portal-border">
             <CodeMirror
+              ref={editorRef}
               value={abcContent}
-              onChange={(value, viewUpdate) => {
-                setAbcContent(value);
-                // Track cursor position for toolbar insertions
-                if (viewUpdate.state.selection.main) {
-                  cursorPositionRef.current = viewUpdate.state.selection.main.head;
-                }
-              }}
-              onStatistics={(data) => {
-                // Update cursor position on selection change
-                if (data.selectionAsSingle) {
-                  cursorPositionRef.current = data.selectionAsSingle;
-                }
-              }}
+              onChange={(value) => setAbcContent(value)}
               extensions={[abcLanguage]}
               theme="dark"
               basicSetup={{
